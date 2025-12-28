@@ -1,0 +1,44 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+gruggrad
+gruggrad.test
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.txt
+coverage.html
+
+# Profiling files
+*.prof
+*.pprof
+
+# Dependency directories
+vendor/
+
+# Go workspace file
+go.work
+
+# Network run outputs (appears to be generated data)
+*_network_run_*.json
+network_run_*.json
+network_runs/
+
+*idx*
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Claude Code
+.claude/
