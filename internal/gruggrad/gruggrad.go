@@ -1,4 +1,4 @@
-package main
+package gruggrad
 
 import (
 	"encoding/json"
@@ -8,11 +8,6 @@ import (
 	"os"
 	"strings"
 )
-
-func main() {
-	// Test harness - uncomment to run specific tests
-	// Milestone1()
-}
 
 type Operation string
 
@@ -346,8 +341,8 @@ func NewNetwork(layers []*Layer) *Network {
 }
 
 type LayerDims struct {
-	numWeights int
-	numNeurons int
+	NumWeights int
+	NumNeurons int
 }
 
 type SerializedNeuron struct {
@@ -398,7 +393,7 @@ func LoadNetworkFromFile(filename string) (*Network, error) {
 func NewRandomNetwork(layerDims []LayerDims) *Network {
 	var layers []*Layer
 	for _, layerDim := range layerDims {
-		layers = append(layers, NewRandomLayer(layerDim.numWeights, layerDim.numNeurons))
+		layers = append(layers, NewRandomLayer(layerDim.NumWeights, layerDim.NumNeurons))
 	}
 	return NewNetwork(layers)
 }
@@ -462,6 +457,6 @@ func LossXOR(expected *Value, actual *Value) *Value {
 }
 
 type TrainingExample struct {
-	input  []*Value
-	output *Value
+	Input  []*Value
+	Output *Value
 }

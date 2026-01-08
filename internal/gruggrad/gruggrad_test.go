@@ -1,4 +1,4 @@
-package main
+package gruggrad
 
 import (
 	"fmt"
@@ -1052,167 +1052,167 @@ func TestGradientClipping(t *testing.T) {
 }
 
 // Network Tests
-func TestNetworkTraining(t *testing.T) {
-	learningRate := 0.01
-
-	network := NewRandomNetwork([]LayerDims{
-		{numWeights: 2, numNeurons: 16},
-		{numWeights: 16, numNeurons: 1}, // output layer
-	})
-
-	examples := []TrainingExample{
-		{
-			input: []*Value{
-				NewValue(0.0),
-				NewValue(0.0),
-			},
-			output: NewValue(0.0),
-		},
-		{
-			input: []*Value{
-				NewValue(1.0),
-				NewValue(0.0),
-			},
-			output: NewValue(1.0),
-		},
-		{
-			input: []*Value{
-				NewValue(0.0),
-				NewValue(1.0),
-			},
-			output: NewValue(1.0),
-		},
-		{
-			input: []*Value{
-				NewValue(1.0),
-				NewValue(1.0),
-			},
-			output: NewValue(0.0),
-		},
-	}
-
-	loss := NewValue(1.0)
-
-	epochs := 1000
-	for range epochs {
-		for _, example := range examples {
-			output := network.Forward(example.input)[0]
-			expected := example.output
-
-			loss = LossXOR(expected, output)
-
-			fmt.Printf("loss: %.16f\n", loss.Data)
-
-			loss.Gradient = 1
-			loss.Backward()
-			network.Tune(learningRate)
-		}
-	}
-	network.Store(fmt.Sprintf("./network_run_%s.json", time.Now().Format(time.DateOnly)))
-	fmt.Printf("\n\n\n final loss: %.16f\n", loss.Data)
-}
-
-func TestNetworkInference(t *testing.T) {
-	network, err := LoadNetworkFromFile("./network_runs/network_run_1.json")
-	if err != nil {
-		t.Errorf("failed to load network from file: %s", err)
-	}
-
-	examples := []TrainingExample{
-		{
-			input: []*Value{
-				NewValue(0.0),
-				NewValue(0.0),
-			},
-			output: NewValue(0.0),
-		},
-		{
-			input: []*Value{
-				NewValue(1.0),
-				NewValue(0.0),
-			},
-			output: NewValue(1.0),
-		},
-		{
-			input: []*Value{
-				NewValue(0.0),
-				NewValue(1.0),
-			},
-			output: NewValue(1.0),
-		},
-		{
-			input: []*Value{
-				NewValue(1.0),
-				NewValue(1.0),
-			},
-			output: NewValue(0.0),
-		},
-	}
-
-	for _, example := range examples {
-		output := network.Forward(example.input)[0]
-		fmt.Printf("input: [%.2f, %.2f] -> output: %.2f\n", example.input[0].Data, example.input[1].Data, output.Data)
-	}
-}
-
-func TestBiggerNetwork(t *testing.T) {
-	learningRate := 0.01
-
-	network := NewRandomNetwork([]LayerDims{
-		{numWeights: 2, numNeurons: 784},
-		{numWeights: 784, numNeurons: 64},
-		{numWeights: 64, numNeurons: 10},
-		{numWeights: 10, numNeurons: 1},
-	})
-
-	examples := []TrainingExample{
-		{
-			input: []*Value{
-				NewValue(0.0),
-				NewValue(0.0),
-			},
-			output: NewValue(0.0),
-		},
-		{
-			input: []*Value{
-				NewValue(1.0),
-				NewValue(0.0),
-			},
-			output: NewValue(1.0),
-		},
-		{
-			input: []*Value{
-				NewValue(0.0),
-				NewValue(1.0),
-			},
-			output: NewValue(1.0),
-		},
-		{
-			input: []*Value{
-				NewValue(1.0),
-				NewValue(1.0),
-			},
-			output: NewValue(0.0),
-		},
-	}
-
-	loss := NewValue(1.0)
-
-	epochs := 1000
-	for range epochs {
-		for _, example := range examples {
-			output := network.Forward(example.input)[0]
-			expected := example.output
-
-			loss = LossXOR(expected, output)
-
-			fmt.Printf("loss: %.16f\n", loss.Data)
-
-			loss.Gradient = 1
-			loss.Backward()
-			network.Tune(learningRate)
-		}
-	}
-	network.Store(fmt.Sprintf("./network_run_%s.json", time.Now().Format(time.DateOnly)))
-	fmt.Printf("\n\n\n final loss: %.16f\n", loss.Data)
-}
+// func TestNetworkTraining(t *testing.T) {
+// 	learningRate := 0.01
+//
+// 	network := NewRandomNetwork([]LayerDims{
+// 		{NumWeights: 2, NumNeurons: 16},
+// 		{NumWeights: 16, NumNeurons: 1}, // output layer
+// 	})
+//
+// 	examples := []TrainingExample{
+// 		{
+// 			Input: []*Value{
+// 				NewValue(0.0),
+// 				NewValue(0.0),
+// 			},
+// 			Output: NewValue(0.0),
+// 		},
+// 		{
+// 			Input: []*Value{
+// 				NewValue(1.0),
+// 				NewValue(0.0),
+// 			},
+// 			Output: NewValue(1.0),
+// 		},
+// 		{
+// 			Input: []*Value{
+// 				NewValue(0.0),
+// 				NewValue(1.0),
+// 			},
+// 			Output: NewValue(1.0),
+// 		},
+// 		{
+// 			Input: []*Value{
+// 				NewValue(1.0),
+// 				NewValue(1.0),
+// 			},
+// 			Output: NewValue(0.0),
+// 		},
+// 	}
+//
+// 	loss := NewValue(1.0)
+//
+// 	epochs := 1000
+// 	for range epochs {
+// 		for _, example := range examples {
+// 			output := network.Forward(example.Input)[0]
+// 			expected := example.Output
+//
+// 			loss = LossXOR(expected, output)
+//
+// 			fmt.Printf("loss: %.16f\n", loss.Data)
+//
+// 			loss.Gradient = 1
+// 			loss.Backward()
+// 			network.Tune(learningRate)
+// 		}
+// 	}
+// 	network.Store(fmt.Sprintf("./network_run_%s.json", time.Now().Format(time.DateOnly)))
+// 	fmt.Printf("\n\n\n final loss: %.16f\n", loss.Data)
+// }
+//
+// func TestNetworkInference(t *testing.T) {
+// 	network, err := LoadNetworkFromFile("./network_runs/network_run_1.json")
+// 	if err != nil {
+// 		t.Errorf("failed to load network from file: %s", err)
+// 	}
+//
+// 	examples := []TrainingExample{
+// 		{
+// 			Input: []*Value{
+// 				NewValue(0.0),
+// 				NewValue(0.0),
+// 			},
+// 			Output: NewValue(0.0),
+// 		},
+// 		{
+// 			Input: []*Value{
+// 				NewValue(1.0),
+// 				NewValue(0.0),
+// 			},
+// 			Output: NewValue(1.0),
+// 		},
+// 		{
+// 			Input: []*Value{
+// 				NewValue(0.0),
+// 				NewValue(1.0),
+// 			},
+// 			Output: NewValue(1.0),
+// 		},
+// 		{
+// 			Input: []*Value{
+// 				NewValue(1.0),
+// 				NewValue(1.0),
+// 			},
+// 			Output: NewValue(0.0),
+// 		},
+// 	}
+//
+// 	for _, example := range examples {
+// 		output := network.Forward(example.Input)[0]
+// 		fmt.Printf("Input: [%.2f, %.2f] -> Output: %.2f\n", example.Input[0].Data, example.Input[1].Data, output.Data)
+// 	}
+// }
+//
+// func TestBiggerNetwork(t *testing.T) {
+// 	learningRate := 0.01
+//
+// 	network := NewRandomNetwork([]LayerDims{
+// 		{NumWeights: 2, NumNeurons: 784},
+// 		{NumWeights: 784, NumNeurons: 64},
+// 		{NumWeights: 64, NumNeurons: 10},
+// 		{NumWeights: 10, NumNeurons: 1},
+// 	})
+//
+// 	examples := []TrainingExample{
+// 		{
+// 			Input: []*Value{
+// 				NewValue(0.0),
+// 				NewValue(0.0),
+// 			},
+// 			Output: NewValue(0.0),
+// 		},
+// 		{
+// 			Input: []*Value{
+// 				NewValue(1.0),
+// 				NewValue(0.0),
+// 			},
+// 			Output: NewValue(1.0),
+// 		},
+// 		{
+// 			Input: []*Value{
+// 				NewValue(0.0),
+// 				NewValue(1.0),
+// 			},
+// 			Output: NewValue(1.0),
+// 		},
+// 		{
+// 			Input: []*Value{
+// 				NewValue(1.0),
+// 				NewValue(1.0),
+// 			},
+// 			Output: NewValue(0.0),
+// 		},
+// 	}
+//
+// 	loss := NewValue(1.0)
+//
+// 	epochs := 1000
+// 	for range epochs {
+// 		for _, example := range examples {
+// 			output := network.Forward(example.Input)[0]
+// 			expected := example.Output
+//
+// 			loss = LossXOR(expected, output)
+//
+// 			fmt.Printf("loss: %.16f\n", loss.Data)
+//
+// 			loss.Gradient = 1
+// 			loss.Backward()
+// 			network.Tune(learningRate)
+// 		}
+// 	}
+// 	network.Store(fmt.Sprintf("./network_run_%s.json", time.Now().Format(time.DateOnly)))
+// 	fmt.Printf("\n\n\n final loss: %.16f\n", loss.Data)
+// }

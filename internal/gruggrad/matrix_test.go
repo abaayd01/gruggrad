@@ -1,4 +1,4 @@
-package main
+package gruggrad
 
 import (
 	"fmt"
@@ -39,7 +39,7 @@ func TestMatMulBackward_SimpleCase(t *testing.T) {
 
 	// Verify gradients for A
 	for i := range expectedGradA {
-		if !floatEq(a.Gradients.Values[i], expectedGradA[i]) {
+		if !FloatEq(a.Gradients.Values[i], expectedGradA[i]) {
 			t.Errorf("Gradient for A at index %d: expected %.2f, got %.2f",
 				i, expectedGradA[i], a.Gradients.Values[i])
 		}
@@ -47,7 +47,7 @@ func TestMatMulBackward_SimpleCase(t *testing.T) {
 
 	// Verify gradients for B
 	for i := range expectedGradB {
-		if !floatEq(b.Gradients.Values[i], expectedGradB[i]) {
+		if !FloatEq(b.Gradients.Values[i], expectedGradB[i]) {
 			t.Errorf("Gradient for B at index %d: expected %.2f, got %.2f",
 				i, expectedGradB[i], b.Gradients.Values[i])
 		}
@@ -88,7 +88,7 @@ func TestMatMulBackward_NonSquareMatrices(t *testing.T) {
 
 	// Verify gradients for A
 	for i := range expectedGradA {
-		if !floatEq(a.Gradients.Values[i], expectedGradA[i]) {
+		if !FloatEq(a.Gradients.Values[i], expectedGradA[i]) {
 			t.Errorf("Gradient for A at index %d: expected %.2f, got %.2f",
 				i, expectedGradA[i], a.Gradients.Values[i])
 		}
@@ -96,7 +96,7 @@ func TestMatMulBackward_NonSquareMatrices(t *testing.T) {
 
 	// Verify gradients for B
 	for i := range expectedGradB {
-		if !floatEq(b.Gradients.Values[i], expectedGradB[i]) {
+		if !FloatEq(b.Gradients.Values[i], expectedGradB[i]) {
 			t.Errorf("Gradient for B at index %d: expected %.2f, got %.2f",
 				i, expectedGradB[i], b.Gradients.Values[i])
 		}
@@ -135,7 +135,7 @@ func TestMatMulBackward_VectorMatrix(t *testing.T) {
 
 	// Verify gradients for A
 	for i := range expectedGradA {
-		if !floatEq(a.Gradients.Values[i], expectedGradA[i]) {
+		if !FloatEq(a.Gradients.Values[i], expectedGradA[i]) {
 			t.Errorf("Gradient for A at index %d: expected %.2f, got %.2f",
 				i, expectedGradA[i], a.Gradients.Values[i])
 		}
@@ -143,7 +143,7 @@ func TestMatMulBackward_VectorMatrix(t *testing.T) {
 
 	// Verify gradients for B
 	for i := range expectedGradB {
-		if !floatEq(b.Gradients.Values[i], expectedGradB[i]) {
+		if !FloatEq(b.Gradients.Values[i], expectedGradB[i]) {
 			t.Errorf("Gradient for B at index %d: expected %.2f, got %.2f",
 				i, expectedGradB[i], b.Gradients.Values[i])
 		}
@@ -191,7 +191,7 @@ func TestMatMulBackward_ChainedOperations(t *testing.T) {
 
 	// Verify gradients for A
 	for i := range expectedGradA {
-		if !floatEq(a.Gradients.Values[i], expectedGradA[i]) {
+		if !FloatEq(a.Gradients.Values[i], expectedGradA[i]) {
 			t.Errorf("Gradient for A at index %d: expected %.2f, got %.2f",
 				i, expectedGradA[i], a.Gradients.Values[i])
 		}
@@ -199,7 +199,7 @@ func TestMatMulBackward_ChainedOperations(t *testing.T) {
 
 	// Verify gradients for B
 	for i := range expectedGradB {
-		if !floatEq(b.Gradients.Values[i], expectedGradB[i]) {
+		if !FloatEq(b.Gradients.Values[i], expectedGradB[i]) {
 			t.Errorf("Gradient for B at index %d: expected %.2f, got %.2f",
 				i, expectedGradB[i], b.Gradients.Values[i])
 		}
@@ -207,7 +207,7 @@ func TestMatMulBackward_ChainedOperations(t *testing.T) {
 
 	// Verify gradients for C
 	for i := range expectedGradC {
-		if !floatEq(c.Gradients.Values[i], expectedGradC[i]) {
+		if !FloatEq(c.Gradients.Values[i], expectedGradC[i]) {
 			t.Errorf("Gradient for C at index %d: expected %.2f, got %.2f",
 				i, expectedGradC[i], c.Gradients.Values[i])
 		}
@@ -241,7 +241,7 @@ func TestMatMulBackward_DifferentUpstreamGradients(t *testing.T) {
 
 	// Verify gradients for A
 	for i := range expectedGradA {
-		if !floatEq(a.Gradients.Values[i], expectedGradA[i]) {
+		if !FloatEq(a.Gradients.Values[i], expectedGradA[i]) {
 			t.Errorf("Gradient for A at index %d: expected %.2f, got %.2f",
 				i, expectedGradA[i], a.Gradients.Values[i])
 		}
@@ -249,7 +249,7 @@ func TestMatMulBackward_DifferentUpstreamGradients(t *testing.T) {
 
 	// Verify gradients for B
 	for i := range expectedGradB {
-		if !floatEq(b.Gradients.Values[i], expectedGradB[i]) {
+		if !FloatEq(b.Gradients.Values[i], expectedGradB[i]) {
 			t.Errorf("Gradient for B at index %d: expected %.2f, got %.2f",
 				i, expectedGradB[i], b.Gradients.Values[i])
 		}
@@ -579,13 +579,13 @@ func TestSoftMaxCrossEntropy_GradientFormula(t *testing.T) {
 	expectedGrad2 := (softmax2 - 1.0) / 1.0 // softmax - 1
 
 	tolerance := 1e-6
-	if !floatEq(input.Gradients.Values[0], expectedGrad0) {
+	if !FloatEq(input.Gradients.Values[0], expectedGrad0) {
 		t.Errorf("Grad[0]: expected %.6f, got %.6f", expectedGrad0, input.Gradients.Values[0])
 	}
-	if !floatEq(input.Gradients.Values[1], expectedGrad1) {
+	if !FloatEq(input.Gradients.Values[1], expectedGrad1) {
 		t.Errorf("Grad[1]: expected %.6f, got %.6f", expectedGrad1, input.Gradients.Values[1])
 	}
-	if !floatEq(input.Gradients.Values[2], expectedGrad2) {
+	if !FloatEq(input.Gradients.Values[2], expectedGrad2) {
 		t.Errorf("Grad[2]: expected %.6f, got %.6f", expectedGrad2, input.Gradients.Values[2])
 	}
 
@@ -610,7 +610,7 @@ func TestMatrixLeakyReLU(t *testing.T) {
 	expected := []float64{1.0, -0.02, 3.0, -0.005, 0.0, 2.5}
 
 	for i := range expected {
-		if !floatEq(output.Values[i], expected[i]) {
+		if !FloatEq(output.Values[i], expected[i]) {
 			t.Errorf("Output[%d]: expected %.6f, got %.6f", i, expected[i], output.Values[i])
 		}
 	}
@@ -639,7 +639,7 @@ func TestMatrixLeakyReLUBackward(t *testing.T) {
 	expectedGrads := []float64{1.0, 0.1, 1.0, 0.1}
 
 	for i := range expectedGrads {
-		if !floatEq(input.Gradients.Values[i], expectedGrads[i]) {
+		if !FloatEq(input.Gradients.Values[i], expectedGrads[i]) {
 			t.Errorf("Gradient[%d]: expected %.6f, got %.6f",
 				i, expectedGrads[i], input.Gradients.Values[i])
 		}
@@ -712,7 +712,7 @@ func TestClipGradients(t *testing.T) {
 	expected := []float64{3.0, -3.0, 2.0, -0.5, 3.0, -3.0}
 
 	for i := range expected {
-		if !floatEq(m.Gradients.Values[i], expected[i]) {
+		if !FloatEq(m.Gradients.Values[i], expected[i]) {
 			t.Errorf("Gradient[%d]: expected %.6f, got %.6f",
 				i, expected[i], m.Gradients.Values[i])
 		}
@@ -786,5 +786,5 @@ func TestSoftMaxCrossEntropy2(t *testing.T) {
 
 	output := input.SoftMaxCrossEntropy2(targets)
 
-	fmt.Printf("output:\n%s\n", output.Matrix.String())
+	fmt.Printf("Output: \n%s\n", output.Matrix.String())
 }

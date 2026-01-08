@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+
+	gruggrad "abaayd01/gruggrad/internal/gruggrad"
 )
 
 func convertNetworkToMNetwork(inputFile, outputFile string) error {
@@ -14,14 +16,14 @@ func convertNetworkToMNetwork(inputFile, outputFile string) error {
 	}
 
 	// Unmarshal into SerializedNetwork
-	var network SerializedNetwork
+	var network gruggrad.SerializedNetwork
 	err = json.Unmarshal(jsonData, &network)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal JSON: %w", err)
 	}
 
 	// Convert to SerializedMNetwork
-	var mNetwork SerializedMNetwork
+	var mNetwork gruggrad.SerializedMNetwork
 	for _, layer := range network.Layers {
 		if len(layer.Neurons) == 0 {
 			continue
@@ -45,13 +47,13 @@ func convertNetworkToMNetwork(inputFile, outputFile string) error {
 			biasValues[i] = neuron.Bias
 		}
 
-		mLayer := SerializedMLayer{
-			Weights: SerializedMatrix{
+		mLayer := gruggrad.SerializedMLayer{
+			Weights: gruggrad.SerializedMatrix{
 				Values:  weightValues,
 				NumRows: numNeurons,
 				NumCols: numWeights,
 			},
-			Biases: SerializedMatrix{
+			Biases: gruggrad.SerializedMatrix{
 				Values:  biasValues,
 				NumRows: numNeurons,
 				NumCols: 1,
@@ -82,4 +84,21 @@ func convertNetworkToMNetwork(inputFile, outputFile string) error {
 			layer.Biases.NumRows, layer.Biases.NumCols)
 	}
 	return nil
+}
+
+func main() {
+	if len(os.Args) != 3 {
+		fmt.Println("Usage: convert_network <input_network.json> <output_mnetwork.json>")
+		fmt.Println("\nConverts a Network JSON file to MNetwork JSON format")
+		os.Exit(1)
+	}
+
+	inputFile := os.Args[1]
+	outputFile := os.Args[2]
+
+	err := convertNetworkToMNetwork(inputFile, outputFile)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
 }

@@ -1,4 +1,4 @@
-package main
+package gruggrad
 
 import (
 	"fmt"
@@ -14,26 +14,26 @@ func TestMNetworkForward(t *testing.T) {
 
 	examples := []MNetworkTrainingExample{
 		{
-			input:  NewTrackedMatrixWithValues(1, 2, []float64{0, 0}),
-			output: NewTrackedMatrixWithValues(1, 1, []float64{0}),
+			Input: NewTrackedMatrixWithValues(1, 2, []float64{0, 0}),
+			Output: NewTrackedMatrixWithValues(1, 1, []float64{0}),
 		},
 		{
-			input:  NewTrackedMatrixWithValues(1, 2, []float64{1, 0}),
-			output: NewTrackedMatrixWithValues(1, 1, []float64{1}),
+			Input: NewTrackedMatrixWithValues(1, 2, []float64{1, 0}),
+			Output: NewTrackedMatrixWithValues(1, 1, []float64{1}),
 		},
 		{
-			input:  NewTrackedMatrixWithValues(1, 2, []float64{0, 1}),
-			output: NewTrackedMatrixWithValues(1, 1, []float64{1}),
+			Input: NewTrackedMatrixWithValues(1, 2, []float64{0, 1}),
+			Output: NewTrackedMatrixWithValues(1, 1, []float64{1}),
 		},
 		{
-			input:  NewTrackedMatrixWithValues(1, 2, []float64{1, 1}),
-			output: NewTrackedMatrixWithValues(1, 1, []float64{0}),
+			Input: NewTrackedMatrixWithValues(1, 2, []float64{1, 1}),
+			Output: NewTrackedMatrixWithValues(1, 1, []float64{0}),
 		},
 	}
 
 	for _, example := range examples {
-		output := network.Forward(example.input)
-		fmt.Printf("\ninput:\n%s\n\noutput:\n%s\n\n========\n", example.input.String(), output.String())
+		output := network.Forward(example.Input)
+		fmt.Printf("\ninput:\n%s\n\noutput:\n%s\n\n========\n", example.Input.String(), output.String())
 	}
 }
 
@@ -41,13 +41,13 @@ func TestMNetworkTraining(t *testing.T) {
 	learningRate := 0.01
 
 	network := NewRandomMNetwork([]LayerDims{
-		{numWeights: 2, numNeurons: 16},
-		{numWeights: 16, numNeurons: 1}, // output layer
+		{NumWeights: 2, NumNeurons: 16},
+		{NumWeights: 16, NumNeurons: 1}, // output layer
 	})
 
 	examples := []MNetworkTrainingExample{
 		{
-			input: NewTrackedMatrixWithValues(
+			Input: NewTrackedMatrixWithValues(
 				4, 2,
 				[]float64{
 					0, 0,
@@ -56,7 +56,7 @@ func TestMNetworkTraining(t *testing.T) {
 					1, 1,
 				},
 			),
-			output: NewTrackedMatrixWithValues(
+			Output: NewTrackedMatrixWithValues(
 				4, 1,
 				[]float64{
 					0,
@@ -73,12 +73,12 @@ func TestMNetworkTraining(t *testing.T) {
 	epochs := 1000
 	for range epochs {
 		for _, example := range examples {
-			output := network.Forward(example.input)
-			expected := example.output
+			output := network.Forward(example.Input)
+			expected := example.Output
 
 			loss = MLossXOR(expected, output)
 
-			fmt.Printf("output: %s, loss: %s\n", output.Matrix.String(), loss.Matrix.String())
+			fmt.Printf("Output: %s, loss: %s\n", output.Matrix.String(), loss.Matrix.String())
 			loss.Gradients.Values = []float64{1}
 			loss.Backward()
 			network.Tune(learningRate)
@@ -94,5 +94,5 @@ func TestMLossXOR(t *testing.T) {
 
 	output := MLossXOR(target, input)
 
-	fmt.Printf("output:\n%s\n\n", output.Matrix.String())
+	fmt.Printf("Output: \n%s\n\n", output.Matrix.String())
 }

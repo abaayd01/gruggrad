@@ -1,16 +1,17 @@
-package main
+package mnist
 
 import (
+	gruggrad "abaayd01/gruggrad/internal/gruggrad"
 	"math"
 	"testing"
 )
 
 func TestSoftmax(t *testing.T) {
 	// Test with simple inputs
-	inputs := []*Value{
-		NewValue(1.0),
-		NewValue(2.0),
-		NewValue(3.0),
+	inputs := []*gruggrad.Value{
+		gruggrad.NewValue(1.0),
+		gruggrad.NewValue(2.0),
+		gruggrad.NewValue(3.0),
 	}
 
 	outputs := Softmax(inputs)
@@ -48,16 +49,16 @@ func TestSoftmax(t *testing.T) {
 
 func TestNeuronBackwardPropagation(t *testing.T) {
 	// Test if gradients propagate through a single neuron
-	weight1 := NewValue(0.5)
-	weight2 := NewValue(0.3)
-	bias := NewValue(0.1)
+	weight1 := gruggrad.NewValue(0.5)
+	weight2 := gruggrad.NewValue(0.3)
+	bias := gruggrad.NewValue(0.1)
 
-	neuron := NewNeuron([]*Value{weight1, weight2}, bias)
+	neuron := gruggrad.NewNeuron([]*gruggrad.Value{weight1, weight2}, bias)
 
-	input1 := NewValue(1.0)
-	input2 := NewValue(2.0)
+	input1 := gruggrad.NewValue(1.0)
+	input2 := gruggrad.NewValue(2.0)
 
-	output := neuron.Forward([]*Value{input1, input2})
+	output := neuron.Forward([]*gruggrad.Value{input1, input2})
 
 	// Set gradient on output and backpropagate
 	output.Gradient = 1.0
@@ -78,12 +79,12 @@ func TestNeuronBackwardPropagation(t *testing.T) {
 
 func TestSimplifiedMNISTPattern(t *testing.T) {
 	// Minimal test using MNIST pattern (Softmax + loss) to isolate the bug
-	network := NewRandomNetwork([]LayerDims{
-		{numWeights: 2, numNeurons: 4},
-		{numWeights: 4, numNeurons: 3}, // 3 outputs for softmax
+	network := gruggrad.NewRandomNetwork([]gruggrad.LayerDims{
+		{NumWeights: 2, NumNeurons: 4},
+		{NumWeights: 4, NumNeurons: 3}, // 3 outputs for softmax
 	})
 
-	input := []*Value{NewValue(0.5), NewValue(0.8)}
+	input := []*gruggrad.Value{gruggrad.NewValue(0.5), gruggrad.NewValue(0.8)}
 
 	// Forward pass
 	output := network.Forward(input)

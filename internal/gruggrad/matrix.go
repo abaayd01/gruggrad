@@ -1,4 +1,4 @@
-package main
+package gruggrad
 
 import (
 	"fmt"
@@ -37,8 +37,10 @@ func NewRandomMatrix(numRows, numCols int) *Matrix {
 		NumRows: numRows,
 		NumCols: numCols,
 	}
+	// Xavier initialization: scale by sqrt(2 / (fan_in + fan_out))
+	scale := math.Sqrt(2.0 / float64(numRows+numCols))
 	for i := range cntElems {
-		m.Values[i] = rand.Float64() - 0.5
+		m.Values[i] = (rand.Float64() - 0.5) * 2.0 * scale
 	}
 	return &m
 }
@@ -50,7 +52,7 @@ func (m *Matrix) String() string {
 		if remainder == 0 && i > 0 {
 			mStr.WriteString("\n")
 		}
-		mStr.WriteString(fmt.Sprintf("%.8f ", m.Values[i]))
+		mStr.WriteString(fmt.Sprintf("%.2f ", m.Values[i]))
 	}
 	return mStr.String()
 }
@@ -93,9 +95,13 @@ func (m *Matrix) Set(i, j int, val float64) {
 	m.Values[i*m.NumCols+j] = val
 }
 
+func (m *Matrix) Get(i, j int) float64 {
+	return m.Values[i*m.NumCols+j]
+}
+
 const epsilon = 1e-9
 
-func floatEq(a, b float64) bool {
+func FloatEq(a, b float64) bool {
 	// Check if the absolute difference is less than or equal to the epsilon
 	return math.Abs(a-b) <= epsilon
 }
@@ -105,7 +111,7 @@ func (m *Matrix) Equal(n *Matrix) bool {
 		return false
 	}
 	for i := range m.NumRows * m.NumCols {
-		if !floatEq(m.Values[i], n.Values[i]) {
+		if !FloatEq(m.Values[i], n.Values[i]) {
 			return false
 		}
 	}

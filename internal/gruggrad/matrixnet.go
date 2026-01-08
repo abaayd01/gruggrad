@@ -1,4 +1,4 @@
-package main
+package gruggrad
 
 import (
 	"encoding/json"
@@ -13,7 +13,7 @@ type MLayer struct {
 }
 
 func NewRandomMLayer(numRows, numCols int) *MLayer {
-	weights := NewRandomTrackedMatrixHeInit(numRows, numCols)
+	weights := NewRandomTrackedMatrix(numRows, numCols)
 	return &MLayer{
 		Weights:       weights,
 		Biases:        NewTrackedMatrix(1, numCols),
@@ -48,7 +48,7 @@ type MNetwork struct {
 func NewRandomMNetwork(layerDims []LayerDims) *MNetwork {
 	var layers []*MLayer
 	for i, layerDim := range layerDims {
-		layer := NewRandomMLayer(layerDim.numWeights, layerDim.numNeurons)
+		layer := NewRandomMLayer(layerDim.NumWeights, layerDim.NumNeurons)
 
 		// Mark the last layer as output layer (no ReLU)
 		if i == len(layerDims)-1 {
@@ -171,6 +171,6 @@ func (n *MNetwork) Store(filename string) error {
 }
 
 type MNetworkTrainingExample struct {
-	input  *TrackedMatrix
-	output *TrackedMatrix
+	Input  *TrackedMatrix
+	Output *TrackedMatrix
 }
