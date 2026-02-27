@@ -32,9 +32,9 @@ func GenerateProbabilityMatrix(strs []string) *gruggrad.Matrix {
 			continue
 		}
 		framedName := frameString(str)
-		runePairs := toRunePairs(framedName)
+		runePairs := convertToRunePairs(framedName)
 		for _, pair := range runePairs {
-			currentCharIdx, nextCharIdx := runeToIdx(pair[0]), runeToIdx(pair[1])
+			currentCharIdx, nextCharIdx := RuneToIdx(pair[0]), RuneToIdx(pair[1])
 			curVal := frequencyMatrix.Get(currentCharIdx, nextCharIdx)
 			frequencyMatrix.Set(currentCharIdx, nextCharIdx, curVal+1.0)
 		}
@@ -66,7 +66,7 @@ func frameString(str string) string {
 	return string(StartOfString) + str + string(EndOfString)
 }
 
-func toRunePairs(framedString string) [][2]rune {
+func convertToRunePairs(framedString string) [][2]rune {
 	var result [][2]rune
 	// assumes the str is framed
 	for i, r := range framedString {
@@ -78,7 +78,7 @@ func toRunePairs(framedString string) [][2]rune {
 	return result
 }
 
-func runeToIdx(r rune) int {
+func RuneToIdx(r rune) int {
 	if r == StartOfString {
 		return 26
 	}
@@ -107,9 +107,9 @@ func buildTrainingExamples(filename string) []gruggrad.MNetworkTrainingExample {
 			continue
 		}
 		framedName := frameString(str)
-		runePairs := toRunePairs(framedName)
+		runePairs := convertToRunePairs(framedName)
 		for _, pair := range runePairs {
-			currentCharIdx, nextCharIdx := runeToIdx(pair[0]), runeToIdx(pair[1])
+			currentCharIdx, nextCharIdx := RuneToIdx(pair[0]), RuneToIdx(pair[1])
 			inputMatrix := gruggrad.NewTrackedMatrix(1, 28)
 			inputMatrix.Set(0, currentCharIdx, 1.0)
 			outputMatrix := gruggrad.NewTrackedMatrix(1, 1)

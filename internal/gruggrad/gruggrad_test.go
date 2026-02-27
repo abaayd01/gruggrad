@@ -1,10 +1,8 @@
 package gruggrad
 
 import (
-	"fmt"
 	"math"
 	"testing"
-	"time"
 )
 
 func TestAddition(t *testing.T) {

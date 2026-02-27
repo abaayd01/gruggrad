@@ -33,7 +33,6 @@ func (l *MLayer) Forward(input *TrackedMatrix) *TrackedMatrix {
 }
 
 func (l *MLayer) Tune(learningRate float64) {
-	// TODO: support gradient clipping
 	l.Weights.Matrix = l.Weights.Matrix.Subtract(l.Weights.Gradients.MultiplyScalar(learningRate))
 	l.Weights.ZeroGradients()
 

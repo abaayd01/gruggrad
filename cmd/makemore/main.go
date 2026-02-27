@@ -1,6 +1,7 @@
 package main
 
 import (
+	"abaayd01/gruggrad/internal/gruggrad"
 	"abaayd01/gruggrad/makemore"
 	"fmt"
 	"os"
@@ -22,8 +23,17 @@ func main() {
 		generateBigramProbabilities()
 	case "train":
 		train()
+	case "sample":
+		for range 5 {
+			sampleFromNetwork()
+		}
 	default:
-		fmt.Printf("unknown cmd '%s'\n", cmd)
+		fmt.Fprintf(os.Stderr, "Error: unknown command '%s'\n\n", cmd)
+		fmt.Fprintf(os.Stderr, "Available commands:\n")
+		fmt.Fprintf(os.Stderr, "  generate-probabilities  Generate bigram probability matrix from names.txt\n")
+		fmt.Fprintf(os.Stderr, "  train                   Train neural network on names.txt\n")
+		fmt.Fprintf(os.Stderr, "  sample                  Generate 5 samples from trained network\n")
+		fmt.Fprintf(os.Stderr, "\nUsage: go run cmd/makemore/main.go <command>\n")
 		os.Exit(1)
 	}
 }
@@ -45,6 +55,42 @@ func generateBigramProbabilities() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func sampleFromNetwork() {
+	filename := "./network_runs/makemore_network_run_latest.json"
+	network, err := gruggrad.LoadMNetworkFromFile(filename)
+	if err != nil {
+		panic(err)
+	}
+
+	var name string
+	currentRune := makemore.StartOfString
+
+	// Sample character by character until EndOfString
+	for {
+		currentRuneIdx := makemore.RuneToIdx(currentRune)
+		inputMatrix := gruggrad.NewTrackedMatrix(1, 28)
+		inputMatrix.Set(0, currentRuneIdx, 1.0)
+
+		output := network.Forward(inputMatrix)
+		probs := output.SoftMax()
+
+		// Sample from the distribution
+		sampledIdx := probs.Multinomial()
+
+		// Check if we hit end of string
+		if sampledIdx == 27 {
+			break
+		}
+
+		// Convert index to character and append
+		sampledChar := idxToString(sampledIdx)
+		name += sampledChar
+		currentRune = rune(sampledChar[0])
+	}
+
+	fmt.Printf("Neural network generated name: '%s' (length: %d)\n", name, len(name))
 }
 
 func train() {

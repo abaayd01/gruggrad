@@ -66,7 +66,7 @@ func TestToRunePairs(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		result := toRunePairs(tc.input)
+		result := convertToRunePairs(tc.input)
 		if !slices.Equal(result, tc.output) {
 			t.Errorf("expected: %v, but got %v for input: %s", tc.output, result, tc.input)
 		}

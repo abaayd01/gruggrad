@@ -22,9 +22,9 @@ type Matrix struct {
 }
 
 func NewMatrix(numRows, numCols int) *Matrix {
-	vals := make([]float64, numRows*numCols)
+	values := make([]float64, numRows*numCols)
 	return &Matrix{
-		Values:  vals,
+		Values:  values,
 		NumRows: numRows,
 		NumCols: numCols,
 	}
@@ -538,6 +538,37 @@ func (t *TrackedMatrix) SoftMax() *TrackedMatrix {
 		Operation:   OpSoftMax,
 		Gradients:   NewMatrix(resultMatrix.NumRows, resultMatrix.NumCols),
 	}
+}
+
+// Multinomial samples a single index from the probability distribution
+// represented by this TrackedMatrix. The matrix must be a [1, N] row vector
+// where values represent probabilities that sum to ~1.0 (e.g., output of SoftMax).
+// Returns an index i where P(return i) = Values[i].
+//
+// Example:
+//
+//	probs := NewTrackedMatrixWithValues(1, 3, []float64{0.1, 0.6, 0.3})
+//	idx := probs.Multinomial() // Returns 0, 1, or 2 with respective probabilities
+func (tm *TrackedMatrix) Multinomial() int {
+	// Validate dimension (panic if not [1, N])
+	if tm.NumRows != 1 {
+		panic("Multinomial requires a 1xN matrix (single row vector)")
+	}
+
+	// Generate uniform random in [0, 1)
+	u := rand.Float64()
+
+	// Cumulative sampling
+	cumulative := 0.0
+	for i := 0; i < tm.NumCols; i++ {
+		cumulative += tm.Values[i]
+		if u <= cumulative {
+			return i
+		}
+	}
+
+	// Fallback for floating point precision
+	return tm.NumCols - 1
 }
 
 // SoftMaxCrossEntropy computes the combined softmax + cross-entropy loss

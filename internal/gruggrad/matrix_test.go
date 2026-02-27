@@ -788,3 +788,98 @@ func TestSoftMaxCrossEntropy2(t *testing.T) {
 
 	fmt.Printf("Output: \n%s\n", output.Matrix.String())
 }
+
+func TestMultinomial_Distribution(t *testing.T) {
+	// Create known distribution
+	probs := NewTrackedMatrixWithValues(1, 3, []float64{0.1, 0.6, 0.3})
+
+	// Sample many times
+	counts := make([]int, 3)
+	numSamples := 10000
+	for i := 0; i < numSamples; i++ {
+		idx := probs.Multinomial()
+		counts[idx]++
+	}
+
+	// Check empirical distribution matches theoretical
+	tolerance := 0.02 // 2% tolerance
+	for i := 0; i < 3; i++ {
+		empirical := float64(counts[i]) / float64(numSamples)
+		expected := probs.Values[i]
+		diff := empirical - expected
+		if diff < 0 {
+			diff = -diff
+		}
+		if diff > tolerance {
+			t.Errorf("Index %d: expected ~%.2f, got %.2f (diff=%.4f)",
+				i, expected, empirical, diff)
+		}
+	}
+}
+
+func TestMultinomial_DeterministicCases(t *testing.T) {
+	// Case 1: Probability 1.0 at index 0
+	probs1 := NewTrackedMatrixWithValues(1, 3, []float64{1.0, 0.0, 0.0})
+	for i := 0; i < 100; i++ {
+		if probs1.Multinomial() != 0 {
+			t.Errorf("Expected index 0 with probability 1.0")
+		}
+	}
+
+	// Case 2: Probability 1.0 at index 2
+	probs2 := NewTrackedMatrixWithValues(1, 3, []float64{0.0, 0.0, 1.0})
+	for i := 0; i < 100; i++ {
+		if probs2.Multinomial() != 2 {
+			t.Errorf("Expected index 2 with probability 1.0")
+		}
+	}
+}
+
+func TestMultinomial_EdgeCases(t *testing.T) {
+	// Single element
+	probs := NewTrackedMatrixWithValues(1, 1, []float64{1.0})
+	if probs.Multinomial() != 0 {
+		t.Errorf("Single element should return index 0")
+	}
+
+	// Many zeros
+	probs2 := NewTrackedMatrixWithValues(1, 5, []float64{0.0, 0.0, 1.0, 0.0, 0.0})
+	for i := 0; i < 50; i++ {
+		if probs2.Multinomial() != 2 {
+			t.Errorf("Expected index 2")
+		}
+	}
+}
+
+func TestMultinomial_PanicsOnMultipleRows(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Expected panic for 2xN matrix")
+		}
+	}()
+
+	probs := NewTrackedMatrixWithValues(2, 3,
+		[]float64{0.1, 0.5, 0.4, 0.3, 0.3, 0.4})
+	probs.Multinomial() // Should panic
+}
+
+func TestMultinomial_WithSoftMax(t *testing.T) {
+	// Create logits and apply softmax
+	logits := NewTrackedMatrixWithValues(1, 3, []float64{1.0, 2.0, 3.0})
+	probs := logits.SoftMax()
+
+	// Sample should work without error
+	counts := make([]int, 3)
+	for i := 0; i < 1000; i++ {
+		idx := probs.Multinomial()
+		if idx < 0 || idx >= 3 {
+			t.Errorf("Invalid index %d returned", idx)
+		}
+		counts[idx]++
+	}
+
+	// Higher logit should have more samples
+	if counts[2] < counts[1] || counts[1] < counts[0] {
+		t.Logf("Warning: Expected monotonic increase in counts, got %v", counts)
+	}
+}
