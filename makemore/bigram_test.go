@@ -34,7 +34,7 @@ func TestRuneToIdx(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		result := runeToIdx(tc.input)
+		result := RuneToIdx(tc.input)
 		if result != tc.output {
 			t.Errorf("expected: %d, but got %d for input: %c", tc.output, result, tc.input)
 		}
@@ -97,7 +97,7 @@ func TestGenerateProbabilityMatrix(t *testing.T) {
 		}
 
 		for _, tc := range testCases {
-			prob := result.Get(runeToIdx(tc.from), runeToIdx(tc.to))
+			prob := result.Get(RuneToIdx(tc.from), RuneToIdx(tc.to))
 			if fmt.Sprintf("%.2f", prob) != fmt.Sprintf("%.2f", tc.expected) {
 				t.Errorf("%s: expected %.2f, but got %.2f", tc.name, tc.expected, prob)
 			}
@@ -126,7 +126,7 @@ func TestGenerateProbabilityMatrix(t *testing.T) {
 		}
 
 		for _, tc := range testCases {
-			prob := result.Get(runeToIdx(tc.from), runeToIdx(tc.to))
+			prob := result.Get(RuneToIdx(tc.from), RuneToIdx(tc.to))
 			if fmt.Sprintf("%.4f", prob) != fmt.Sprintf("%.4f", tc.expected) {
 				t.Errorf("%s: expected %.4f, but got %.4f", tc.name, tc.expected, prob)
 			}
@@ -154,7 +154,7 @@ func TestGenerateProbabilityMatrix(t *testing.T) {
 		}
 
 		for _, tc := range testCases {
-			prob := result.Get(runeToIdx(tc.from), runeToIdx(tc.to))
+			prob := result.Get(RuneToIdx(tc.from), RuneToIdx(tc.to))
 			if fmt.Sprintf("%.4f", prob) != fmt.Sprintf("%.4f", tc.expected) {
 				t.Errorf("%s: expected %.4f, but got %.4f", tc.name, tc.expected, prob)
 			}
@@ -166,4 +166,22 @@ func TestBuildTrainingExamples(t *testing.T) {
 	examples := buildTrainingExamples("./names.txt")
 	fmt.Printf("Input:\n%+v\n\n", examples[0].Input)
 	fmt.Printf("Output:\n%+v\n\n", examples[0].Output)
+}
+
+func TestConvertToNGramString(t *testing.T) {
+	input := "emma"
+	n := 3
+
+	// expectedResult := []string{
+	// 	string(StartOfString) + string(StartOfString) + "e",
+	// 	string(StartOfString) + "e" + "m",
+	// 	"emm",
+	// 	"mma",
+	// 	"ma" + string(EndOfString),
+	// 	"a" + string(EndOfString) + string(EndOfString),
+	// }
+
+	result := ConvertToNGramString(input, n)
+
+	t.Logf("\nresult: %+x\n", result)
 }
