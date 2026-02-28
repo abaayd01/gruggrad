@@ -9,8 +9,12 @@ import (
 )
 
 const (
-	StartOfString rune = 0x02 // STX
-	EndOfString   rune = 0x03 // ETX
+	AlphabetSize      = 26
+	VocabSize         = AlphabetSize + 1
+	BoundaryIdx       = AlphabetSize
+	BoundaryRune rune = '.'
+
+	LatestNetworkRunPath = "./network_runs/makemore_network_run_latest.json"
 )
 
 func GenerateProbabilityMatrixFromFile(filename string) *gruggrad.Matrix {
@@ -23,9 +27,7 @@ func GenerateProbabilityMatrixFromFile(filename string) *gruggrad.Matrix {
 }
 
 func GenerateProbabilityMatrix(strs []string) *gruggrad.Matrix {
-	// 26 letters + start + end rune
-	size := 28
-	frequencyMatrix := gruggrad.NewMatrix(size, size)
+	frequencyMatrix := gruggrad.NewMatrix(VocabSize, VocabSize)
 
 	for _, str := range strs {
 		if len(str) == 0 {
@@ -63,35 +65,40 @@ func GenerateProbabilityMatrix(strs []string) *gruggrad.Matrix {
 }
 
 func frameString(str string) string {
-	return string(StartOfString) + str + string(EndOfString)
+	return string(BoundaryRune) + str + string(BoundaryRune)
 }
 
 func convertToRunePairs(framedString string) [][2]rune {
-	var result [][2]rune
-	// assumes the str is framed
-	for i, r := range framedString {
-		if r == EndOfString {
-			break
-		}
-		result = append(result, [2]rune{r, rune(framedString[i+1])})
+	runes := []rune(framedString)
+	result := make([][2]rune, 0, len(runes))
+	for i := 0; i < len(runes)-1; i++ {
+		result = append(result, [2]rune{runes[i], runes[i+1]})
 	}
 	return result
 }
 
 func RuneToIdx(r rune) int {
-	if r == StartOfString {
-		return 26
-	}
-
-	if r == EndOfString {
-		return 27
+	if r == BoundaryRune {
+		return BoundaryIdx
 	}
 
 	val := int(r) - int('a')
-	if val < 0 || val > 25 {
+	if val < 0 || val >= AlphabetSize {
 		panic(fmt.Sprintf("invalid rune: %c", r))
 	}
 	return val
+}
+
+func IdxToRune(idx int) rune {
+	if idx == BoundaryIdx {
+		return BoundaryRune
+	}
+
+	if idx < 0 || idx >= AlphabetSize {
+		panic(fmt.Sprintf("invalid idx: %d", idx))
+	}
+
+	return rune('a' + idx)
 }
 
 func buildTrainingExamples(filename string) []gruggrad.MNetworkTrainingExample {
@@ -110,7 +117,7 @@ func buildTrainingExamples(filename string) []gruggrad.MNetworkTrainingExample {
 		runePairs := convertToRunePairs(framedName)
 		for _, pair := range runePairs {
 			currentCharIdx, nextCharIdx := RuneToIdx(pair[0]), RuneToIdx(pair[1])
-			inputMatrix := gruggrad.NewTrackedMatrix(1, 28)
+			inputMatrix := gruggrad.NewTrackedMatrix(1, VocabSize)
 			inputMatrix.Set(0, currentCharIdx, 1.0)
 			outputMatrix := gruggrad.NewTrackedMatrix(1, 1)
 			outputMatrix.Set(0, 0, float64(nextCharIdx))
@@ -128,7 +135,7 @@ func Train() {
 	learningRate := 0.01
 
 	network := gruggrad.NewRandomMNetwork([]gruggrad.LayerDims{
-		{NumWeights: 28, NumNeurons: 28},
+		{NumWeights: VocabSize, NumNeurons: VocabSize},
 	})
 
 	examples := buildTrainingExamples("./makemore/names.txt")
@@ -149,6 +156,7 @@ func Train() {
 	}
 
 	network.Store(fmt.Sprintf("./network_runs/makemore_network_run_%s.json", time.Now().Format(time.DateTime)))
+	network.Store(LatestNetworkRunPath)
 	fmt.Println("Training complete! Network saved.")
 }
 
@@ -157,12 +165,12 @@ func TrainBatched() {
 	batchSize := 16
 
 	network := gruggrad.NewRandomMNetwork([]gruggrad.LayerDims{
-		{NumWeights: 28, NumNeurons: 28},
+		{NumWeights: VocabSize, NumNeurons: VocabSize},
 	})
 
 	examples := buildTrainingExamples("./makemore/names.txt")
 
-	epochs := 50
+	epochs := 25
 	for epoch := range epochs {
 		totalLoss := 0.0
 		numBatches := 0
@@ -177,13 +185,13 @@ func TrainBatched() {
 			currentBatchSize := end - i
 
 			// Stack examples into batch matrices
-			batchInput := gruggrad.NewTrackedMatrix(currentBatchSize, 28)
+			batchInput := gruggrad.NewTrackedMatrix(currentBatchSize, VocabSize)
 			batchTarget := gruggrad.NewTrackedMatrix(currentBatchSize, 1)
 
 			for j := 0; j < currentBatchSize; j++ {
 				example := examples[i+j]
 				// Copy input values
-				copy(batchInput.Values[j*28:(j+1)*28], example.Input.Values)
+				copy(batchInput.Values[j*VocabSize:(j+1)*VocabSize], example.Input.Values)
 				// Copy target value
 				batchTarget.Values[j] = example.Output.Values[0]
 			}
@@ -205,6 +213,7 @@ func TrainBatched() {
 	}
 
 	network.Store(fmt.Sprintf("./network_runs/makemore_network_run_batched_%s.json", time.Now().Format(time.DateTime)))
+	network.Store(LatestNetworkRunPath)
 	fmt.Println("Batched training complete! Network saved.")
 }
 
@@ -214,17 +223,17 @@ func TrainFullBatch() {
 	learningRate := 1.0 // Can use higher LR with full batch
 
 	network := gruggrad.NewRandomMNetwork([]gruggrad.LayerDims{
-		{NumWeights: 28, NumNeurons: 28},
+		{NumWeights: VocabSize, NumNeurons: VocabSize},
 	})
 
 	examples := buildTrainingExamples("./makemore/names.txt")
 
 	// Stack ALL examples into one big batch
-	batchInput := gruggrad.NewTrackedMatrix(len(examples), 28)
+	batchInput := gruggrad.NewTrackedMatrix(len(examples), VocabSize)
 	batchTarget := gruggrad.NewTrackedMatrix(len(examples), 1)
 
 	for i, example := range examples {
-		copy(batchInput.Values[i*28:(i+1)*28], example.Input.Values)
+		copy(batchInput.Values[i*VocabSize:(i+1)*VocabSize], example.Input.Values)
 		batchTarget.Values[i] = example.Output.Values[0]
 	}
 
@@ -243,5 +252,10 @@ func TrainFullBatch() {
 	}
 
 	network.Store(fmt.Sprintf("./network_runs/makemore_network_run_fullbatch_%s.json", time.Now().Format(time.DateTime)))
+	network.Store(LatestNetworkRunPath)
 	fmt.Println("Full-batch training complete! Network saved.")
+}
+
+func ConvertToNGramString(str string, n int) string {
+	return string(BoundaryRune)
 }

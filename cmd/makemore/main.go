@@ -58,19 +58,19 @@ func generateBigramProbabilities() {
 }
 
 func sampleFromNetwork() {
-	filename := "./network_runs/makemore_network_run_latest.json"
+	filename := makemore.LatestNetworkRunPath
 	network, err := gruggrad.LoadMNetworkFromFile(filename)
 	if err != nil {
 		panic(err)
 	}
 
 	var name string
-	currentRune := makemore.StartOfString
+	currentRune := makemore.BoundaryRune
 
-	// Sample character by character until EndOfString
+	// Sample character by character until boundary rune
 	for {
 		currentRuneIdx := makemore.RuneToIdx(currentRune)
-		inputMatrix := gruggrad.NewTrackedMatrix(1, 28)
+		inputMatrix := gruggrad.NewTrackedMatrix(1, makemore.VocabSize)
 		inputMatrix.Set(0, currentRuneIdx, 1.0)
 
 		output := network.Forward(inputMatrix)
@@ -80,14 +80,14 @@ func sampleFromNetwork() {
 		sampledIdx := probs.Multinomial()
 
 		// Check if we hit end of string
-		if sampledIdx == 27 {
+		if sampledIdx == makemore.BoundaryIdx {
 			break
 		}
 
 		// Convert index to character and append
-		sampledChar := idxToString(sampledIdx)
-		name += sampledChar
-		currentRune = rune(sampledChar[0])
+		sampledRune := makemore.IdxToRune(sampledIdx)
+		name += string(sampledRune)
+		currentRune = sampledRune
 	}
 
 	fmt.Printf("Neural network generated name: '%s' (length: %d)\n", name, len(name))
@@ -113,18 +113,13 @@ func stringifyMap(m map[string]float64) string {
 }
 
 func idxToString(idx int) string {
-	if idx < 0 || idx > 27 {
+	if idx < 0 || idx >= makemore.VocabSize {
 		panic("idx out of range for rune conversion")
 	}
 
-	if idx == 26 {
-		return "S"
+	if idx == makemore.BoundaryIdx {
+		return string(makemore.BoundaryRune)
 	}
 
-	if idx == 27 {
-		return "E"
-	}
-
-	val := idx + int('a')
-	return string(val)
+	return string(makemore.IdxToRune(idx))
 }

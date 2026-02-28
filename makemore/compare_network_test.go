@@ -16,7 +16,7 @@ func TestCompareNetworkToBigrams(t *testing.T) {
 	learningRate := 0.01
 
 	network := gruggrad.NewRandomMNetwork([]gruggrad.LayerDims{
-		{NumWeights: 28, NumNeurons: 28},
+		{NumWeights: VocabSize, NumNeurons: VocabSize},
 	})
 
 	examples := buildTrainingExamples("./names.txt")
@@ -33,12 +33,12 @@ func TestCompareNetworkToBigrams(t *testing.T) {
 			currentBatchSize := end - i
 
 			// Stack examples into batch matrices
-			batchInput := gruggrad.NewTrackedMatrix(currentBatchSize, 28)
+			batchInput := gruggrad.NewTrackedMatrix(currentBatchSize, VocabSize)
 			batchTarget := gruggrad.NewTrackedMatrix(currentBatchSize, 1)
 
 			for j := 0; j < currentBatchSize; j++ {
 				example := examples[i+j]
-				copy(batchInput.Values[j*28:(j+1)*28], example.Input.Values)
+				copy(batchInput.Values[j*VocabSize:(j+1)*VocabSize], example.Input.Values)
 				batchTarget.Values[j] = example.Output.Values[0]
 			}
 
@@ -73,7 +73,7 @@ func compareNetworkToBigrams(network *gruggrad.MNetwork) {
 		index int
 		name  string
 	}{
-		{StartOfString, 26, "START"},
+		{BoundaryRune, BoundaryIdx, "BOUNDARY"},
 		{'a', 0, "'a'"},
 		{'e', 4, "'e'"},
 	}
@@ -82,11 +82,11 @@ func compareNetworkToBigrams(network *gruggrad.MNetwork) {
 		fmt.Printf("Character %s (index %d):\n", tc.name, tc.index)
 
 		weights := network.Layers[0].Weights
-		logits := make([]float64, 28)
+		logits := make([]float64, VocabSize)
 		biases := network.Layers[0].Biases.Values
 
-		for j := 0; j < 28; j++ {
-			logits[j] = weights.Values[tc.index*28+j] + biases[j]
+		for j := 0; j < VocabSize; j++ {
+			logits[j] = weights.Values[tc.index*VocabSize+j] + biases[j]
 		}
 
 		networkProbs := softmax(logits)
@@ -98,16 +98,8 @@ func compareNetworkToBigrams(network *gruggrad.MNetwork) {
 		}
 
 		var probs []charProb
-		for j := 0; j < 28; j++ {
-			var char rune
-			if j < 26 {
-				char = rune('a' + j)
-			} else if j == 26 {
-				char = StartOfString
-			} else {
-				char = EndOfString
-			}
-
+		for j := 0; j < VocabSize; j++ {
+			char := IdxToRune(j)
 			probs = append(probs, charProb{
 				char:     char,
 				expected: expectedProbs.Get(tc.index, j),
@@ -128,10 +120,8 @@ func compareNetworkToBigrams(network *gruggrad.MNetwork) {
 		for i := 0; i < 5; i++ {
 			p := probs[i]
 			charStr := fmt.Sprintf("'%c'", p.char)
-			if p.char == StartOfString {
-				charStr = "START"
-			} else if p.char == EndOfString {
-				charStr = "END"
+			if p.char == BoundaryRune {
+				charStr = "BOUNDARY"
 			}
 
 			fmt.Printf("    %s: expected=%.6f, actual=%.6f, diff=%+.6f\n",

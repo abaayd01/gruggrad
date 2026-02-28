@@ -28,24 +28,23 @@ func CompareToBigramProbabilities(networkPath string) {
 		index int
 		name  string
 	}{
-		{StartOfString, 26, "START"},
+		{BoundaryRune, BoundaryIdx, "BOUNDARY"},
 		{'a', 0, "'a'"},
 		{'e', 4, "'e'"},
 		{'m', 12, "'m'"},
-		{EndOfString, 27, "END"},
 	}
 
 	for _, tc := range testChars {
 		fmt.Printf("Character %s (index %d):\n", tc.name, tc.index)
 
 		// Get network weights for this input character (row in weight matrix)
-		// Weights are stored as (28, 28) where row=input, col=output
+		// Weights are stored as (VocabSize, VocabSize) where row=input, col=output
 		weights := network.Layers[0].Weights
-		logits := make([]float64, 28)
+		logits := make([]float64, VocabSize)
 		biases := network.Layers[0].Biases.Values
 
-		for j := 0; j < 28; j++ {
-			logits[j] = weights.Values[tc.index*28+j] + biases[j]
+		for j := 0; j < VocabSize; j++ {
+			logits[j] = weights.Values[tc.index*VocabSize+j] + biases[j]
 		}
 
 		// Apply softmax to get probabilities
@@ -61,16 +60,8 @@ func CompareToBigramProbabilities(networkPath string) {
 		}
 
 		var probs []charProb
-		for j := 0; j < 28; j++ {
-			var char rune
-			if j < 26 {
-				char = rune('a' + j)
-			} else if j == 26 {
-				char = StartOfString
-			} else {
-				char = EndOfString
-			}
-
+		for j := 0; j < VocabSize; j++ {
+			char := IdxToRune(j)
 			expected := expectedProbs.Get(tc.index, j)
 			actual := networkProbs[j]
 			probs = append(probs, charProb{
@@ -96,10 +87,8 @@ func CompareToBigramProbabilities(networkPath string) {
 		for i := 0; i < 5 && i < len(probs); i++ {
 			p := probs[i]
 			charStr := fmt.Sprintf("'%c'", p.char)
-			if p.char == StartOfString {
-				charStr = "START"
-			} else if p.char == EndOfString {
-				charStr = "END"
+			if p.char == BoundaryRune {
+				charStr = "BOUNDARY"
 			}
 
 			fmt.Printf("    %s: expected=%.6f, actual=%.6f, diff=%+.6f\n",

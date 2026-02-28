@@ -24,12 +24,8 @@ func TestRuneToIdx(t *testing.T) {
 			output: 25,
 		},
 		{
-			input:  StartOfString,
-			output: 26,
-		},
-		{
-			input:  EndOfString,
-			output: 27,
+			input:  BoundaryRune,
+			output: BoundaryIdx,
 		},
 	}
 
@@ -49,18 +45,18 @@ func TestToRunePairs(t *testing.T) {
 		{
 			input: frameString("a"),
 			output: [][2]rune{
-				{StartOfString, 'a'},
-				{'a', EndOfString},
+				{BoundaryRune, 'a'},
+				{'a', BoundaryRune},
 			},
 		},
 		{
 			input: frameString("abcd"),
 			output: [][2]rune{
-				{StartOfString, 'a'},
+				{BoundaryRune, 'a'},
 				{'a', 'b'},
 				{'b', 'c'},
 				{'c', 'd'},
-				{'d', EndOfString},
+				{'d', BoundaryRune},
 			},
 		},
 	}
@@ -78,8 +74,8 @@ func TestGenerateProbabilityMatrix(t *testing.T) {
 	t.Run("single word", func(t *testing.T) {
 		result := GenerateProbabilityMatrix([]string{"aabc"})
 
-		// For "aabc", the bigrams are: (Start→a), (a→a), (a→b), (b→c), (c→End)
-		// Total bigrams: 5, so each has probability 1/5 = 0.20
+		// For "aabc", the transitions are: (.→a), (a→a), (a→b), (b→c), (c→.)
+		// Rows are normalized independently to represent P(next|current).
 
 		testCases := []struct {
 			name     string
@@ -87,13 +83,13 @@ func TestGenerateProbabilityMatrix(t *testing.T) {
 			to       rune
 			expected float64
 		}{
-			{"Start→a", StartOfString, 'a', 0.20},
-			{"a→a", 'a', 'a', 0.20},
-			{"a→b", 'a', 'b', 0.20},
-			{"b→c", 'b', 'c', 0.20},
-			{"c→End", 'c', EndOfString, 0.20},
-			{"a→End (doesn't exist)", 'a', EndOfString, 0.00},
-			{"Start→b (doesn't exist)", StartOfString, 'b', 0.00},
+			{".→a", BoundaryRune, 'a', 1.0},
+			{"a→a", 'a', 'a', 0.5},
+			{"a→b", 'a', 'b', 0.5},
+			{"b→c", 'b', 'c', 1.0},
+			{"c→.", 'c', BoundaryRune, 1.0},
+			{"a→. (doesn't exist)", 'a', BoundaryRune, 0.00},
+			{".→b (doesn't exist)", BoundaryRune, 'b', 0.00},
 		}
 
 		for _, tc := range testCases {
@@ -107,11 +103,7 @@ func TestGenerateProbabilityMatrix(t *testing.T) {
 	t.Run("multiple words with repeated bigrams", func(t *testing.T) {
 		result := GenerateProbabilityMatrix([]string{"ab", "ab"})
 
-		// For "ab" (twice):
-		// First "ab": (Start→a), (a→b), (b→End) = 3 bigrams
-		// Second "ab": (Start→a), (a→b), (b→End) = 3 bigrams
-		// Total: 6 bigrams
-		// Frequencies: Start→a=2, a→b=2, b→End=2
+		// For "ab" (twice), row-normalized conditionals are unchanged by repeats.
 
 		testCases := []struct {
 			name     string
@@ -119,9 +111,9 @@ func TestGenerateProbabilityMatrix(t *testing.T) {
 			to       rune
 			expected float64
 		}{
-			{"Start→a", StartOfString, 'a', 2.0 / 6.0},
-			{"a→b", 'a', 'b', 2.0 / 6.0},
-			{"b→End", 'b', EndOfString, 2.0 / 6.0},
+			{".→a", BoundaryRune, 'a', 1.0},
+			{"a→b", 'a', 'b', 1.0},
+			{"b→.", 'b', BoundaryRune, 1.0},
 			{"a→a (doesn't exist)", 'a', 'a', 0.00},
 		}
 
@@ -136,10 +128,9 @@ func TestGenerateProbabilityMatrix(t *testing.T) {
 	t.Run("empty strings are skipped", func(t *testing.T) {
 		result := GenerateProbabilityMatrix([]string{"a", "", "b"})
 
-		// "a": (Start→a), (a→End) = 2 bigrams
+		// "a": (.→a), (a→.)
 		// "": skipped
-		// "b": (Start→b), (b→End) = 2 bigrams
-		// Total: 4 bigrams
+		// "b": (.→b), (b→.)
 
 		testCases := []struct {
 			name     string
@@ -147,10 +138,10 @@ func TestGenerateProbabilityMatrix(t *testing.T) {
 			to       rune
 			expected float64
 		}{
-			{"Start→a", StartOfString, 'a', 1.0 / 4.0},
-			{"a→End", 'a', EndOfString, 1.0 / 4.0},
-			{"Start→b", StartOfString, 'b', 1.0 / 4.0},
-			{"b→End", 'b', EndOfString, 1.0 / 4.0},
+			{".→a", BoundaryRune, 'a', 0.5},
+			{"a→.", 'a', BoundaryRune, 1.0},
+			{".→b", BoundaryRune, 'b', 0.5},
+			{"b→.", 'b', BoundaryRune, 1.0},
 		}
 
 		for _, tc := range testCases {
@@ -173,12 +164,12 @@ func TestConvertToNGramString(t *testing.T) {
 	n := 3
 
 	// expectedResult := []string{
-	// 	string(StartOfString) + string(StartOfString) + "e",
-	// 	string(StartOfString) + "e" + "m",
+	// 	string(BoundaryRune) + string(BoundaryRune) + "e",
+	// 	string(BoundaryRune) + "e" + "m",
 	// 	"emm",
 	// 	"mma",
-	// 	"ma" + string(EndOfString),
-	// 	"a" + string(EndOfString) + string(EndOfString),
+	// 	"ma" + string(BoundaryRune),
+	// 	"a" + string(BoundaryRune) + string(BoundaryRune),
 	// }
 
 	result := ConvertToNGramString(input, n)
